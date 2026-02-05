@@ -103,4 +103,26 @@ n_sig
 # powtarzaj wiele razy symulację (1000)
 # generuj zmienne x i y, które są zależne od swojej przeszłości
 # estymuj model i sprawdzaj, w ilu przypdkach p-value jest mniejsze od 5%
-# powinno wyjść, że znacznie częściej
+
+n_sig <- 0
+
+for(i in 1:1000){
+  
+  x = vector()
+  y = vector()
+  x[1] = 0
+  y[1] = 0
+  
+  for(j in 2:100){
+    x[j] = x[j-1]*(-0.9) + rnorm(1)
+    y[j] = y[j-1]*(-0.9) + rnorm(1)
+  }
+  
+  model <- lm(y ~ x)
+  summ <- summary(model)
+  p_val <- summ$coefficients["x",4]
+  if(p_val < 0.05) n_sig <- n_sig + 1
+}
+
+n_sig
+
