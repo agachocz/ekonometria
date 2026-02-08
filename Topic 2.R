@@ -15,7 +15,7 @@
 
 # w następnym zadaniu dodać jakieś outliery: dni świąteczne, festiwal, sławna lodziarnia
 
-n_days <- 50
+n_days <- 20
 
 set.seed(123)
 days <- data.frame(
@@ -52,9 +52,9 @@ shops$other = sapply(shops$beach, function(x) rlnorm(1, log(x/50), 0.5)*10)
 
 data <- merge(days, shops, by = NULL)
 
-data$sales <- 1000 + 8*data$temp - 30*data$rain +(2000-data$beach)/2 + 3*data$other/2 - 5*data$price +
-  50*data$weekend + 10*data$temp*data$weekend +
-  8*(data$exp-4)^2 + 5*(data$flavors-7)^2 + rnorm(1000, 0, 30)
+data$sales <- 2000 + 10*data$temp - 40*data$rain - 0.1*data$beach + 0.05*data$other - 7*data$price +
+  30*data$weekend + 5*data$temp*data$weekend +
+  10*(data$exp-4)^2 + 5*(data$flavors-7)^2 + rnorm(400, 0, 50)
 
 hist(data$beach)  
 hist(data$sales)  
@@ -81,7 +81,7 @@ corrplot(cor(data[,-1]))
 # koincydencja
 
 sign(model$coefficients)
-sign(cor(data[,-1]))[,12]
+sign(cor(data[,-1]))[,10]
 
 # nie występuje dla "other" ze względu na wysoką korelację z "beach" - w modelu lepiej mieć tylko jedną z nich
 
@@ -94,7 +94,7 @@ summary(model)
 # poprawa - nieistotne są zmienne, które nie brały udziału w tworzeniu sales
 # odrzucam nieistotne zmienne
 
-model <- lm(sales ~ temp + rain + beach + weekend + exp + flavors + parking, data)
+model <- lm(sales ~ temp + rain + beach + weekend + flavors, data)
 summary(model)
 
 # zwiększone skorygowane R2 - więc model zyskuje na pomniejszeniu
@@ -131,11 +131,12 @@ comb
 Max <- 0
 K_max <- NULL
 #duża pętla po wierszach comb
-for(i in 1:nrow(comb)-1) {
+for(i in 1:(nrow(comb)-1)) {
   k <- c(1:m)[unlist(comb[i,])]
   #print(k)
   wynik <- 0
-  #pętla po zmiennych w kombinacji
+  
+  # pętla po zmiennych w kombinacji
   for(n in k){
     #print(wynik)
     wynik <- wynik + Ry[n]^2/sum(abs(Rx[n,k]))
