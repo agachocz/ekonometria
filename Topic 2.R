@@ -60,3 +60,106 @@ hist(data$beach)
 hist(data$sales)  
 
 pairs(sales ~ temp + rain + beach + other + price + weekend + exp + flavors, data)
+
+
+# regresja z wieloma zmiennymi
+
+model <- lm(sales ~ temp + rain + beach + other + price + weekend + exp + flavors + parking + wind, data)
+summary(model)
+
+# Tu omówić interpretację zmiennych
+
+cor(data$price, data$beach)
+
+cor(data)
+
+install.packages("corrplot")
+library(corrplot)
+
+corrplot(cor(data[,-1]))
+
+# koincydencja
+
+sign(model$coefficients)
+sign(cor(data[,-1]))[,12]
+
+# nie występuje dla "other" ze względu na wysoką korelację z "beach" - w modelu lepiej mieć tylko jedną z nich
+
+library(car)
+vif(model)
+
+model <- lm(sales ~ temp + rain + beach + price + weekend + exp + flavors + parking + wind, data)
+summary(model)
+
+# poprawa - nieistotne są zmienne, które nie brały udziału w tworzeniu sales
+# odrzucam nieistotne zmienne
+
+model <- lm(sales ~ temp + rain + beach + weekend + exp + flavors + parking, data)
+summary(model)
+
+# zwiększone skorygowane R2 - więc model zyskuje na pomniejszeniu
+
+# pokazuję, że jeśli usunę ważną zmienną, oba wskaźniki spadają
+model <- lm(sales ~ rain + beach + weekend + exp + flavors + parking, data)
+summary(model)
+
+plot(model)
+
+# metoda Hellwiga
+
+expand.grid(c(1:3), c(1:3), c(1:3))
+
+comb <- expand.grid(rep(list(c(T,F)), 10))
+2^10-1
+
+k <- c(1:10)[unlist(comb[100,])]
+
+m <- 10
+
+data <- data[,-c(1, 6)]
+
+cor_matrix <- cor(data)
+cor_matrix
+
+Ry <- cor_matrix[-11,11]
+Rx <- cor_matrix[-11,-11]
+
+
+comb <- expand.grid(rep(list(c(T,F)), m))
+comb
+
+Max <- 0
+K_max <- NULL
+#duża pętla po wierszach comb
+for(i in 1:nrow(comb)-1) {
+  k <- c(1:m)[unlist(comb[i,])]
+  #print(k)
+  wynik <- 0
+  #pętla po zmiennych w kombinacji
+  for(n in k){
+    #print(wynik)
+    wynik <- wynik + Ry[n]^2/sum(abs(Rx[n,k]))
+    #print(wynik)
+  }
+  if(wynik>Max)
+  {
+    Max <- wynik
+    K_max <- k
+  }
+}
+
+colnames(data)[K_max]
+
+# Model z Hellwiga może mieć mniejsze R^2
+
+model <- lm(sales ~ weekend + beach + rain + exp + temp, data)
+summary(model)
+
+vif(model)
+
+
+model <- lm(sales ~ temp + rain + beach + weekend + exp + flavors + parking, data)
+summary(model)
+vif(model)
+
+
