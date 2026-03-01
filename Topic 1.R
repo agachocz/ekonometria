@@ -1,16 +1,23 @@
 library(dplyr)
 # generate simple data
 
+set.seed(111)
 data <- data.frame(
   family_size = rpois(50, 3)
 ) %>% mutate(oranges = family_size+1)
 
 hist(data$family_size)
 plot(x = data$family_size, y = data$oranges)
+abline(a = 1, b = 1, col = "red")
+cor(data$family_size, data$oranges)
 
 # ściśle liniowa zależność, możemy precyzyjnie wyliczyć ze wzoru
 
 # teraz wprowadzam trochę losowości
+# 0 - nie lubi pomarańczy z prawdopodobieństwem 30%
+# 1 - chce 1 pomarańcze z prawdopodobieństwem 50%
+# 2 - chce 2 pomarańcze z prawdopodobieństwem 20%
+
 get_preference = function(family_size){
   sapply(family_size, function(x) {
     sum(sample(c(0, 1, 2), size = x, replace = T, prob = c(0.3, 0.5, 0.2)))
@@ -18,6 +25,7 @@ get_preference = function(family_size){
     )
 }
 
+set.seed(123)
 data <- data %>% mutate(oranges = get_preference(family_size+1))
 
 plot(x = data$family_size, y = data$oranges)
@@ -40,13 +48,16 @@ summary(model)
 sum(model$residuals^2) # niższe
 
 plot(data$family_size, data$oranges)
+abline(a = model$coefficients[1], b = model$coefficients[2], col = "red")
 
 
 # dodanie więcej zmiennych
 
-# promocja - wersja I: liniowa, dodaję więcej pomarańczy
+# wyprzedaż:
+# wersja I (liniowa): jeśli jest wyprzedaż, ludzie biorą jedną pomarańczę więcej
 # wersja II: interakcyjna - więcej pomarańczy na każdego kupującego
 
+set.seed(456)
 data$sale = sample(c(0, 1), 50, replace = T, prob = c(0.7, 0.3))
 data$oranges = get_preference(data$family_size+1) + data$sale
 
@@ -70,10 +81,10 @@ sum(model$residuals^2) # niższy błąd
 
 plot(data$family_size, data$oranges)
 
-# EFEKTY NIEPRZEWIDYWALNE, USTAWIĆ STABILNE ZIARNO
 
 # dodać zmienną, która nie ma wpływu na y
 
+set.seed(789)
 data$temp = round(rnorm(50, 15, 10))
 hist(data$temp)
 

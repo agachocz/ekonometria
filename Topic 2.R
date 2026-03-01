@@ -17,44 +17,45 @@
 
 n_days <- 20
 
-set.seed(123)
+set.seed(111)
 days <- data.frame(
   day_nr = 1:n_days,
-  weekend = sample(c(0, 1), n_days, replace = T, prob = c(5, 2)/7),
-  temp = rnorm(n_days, 25, 3),
-  wind = rlnorm(n_days, 1.5, 1)
+  weekend = sample(c(0, 1), n_days, replace = T, prob = c(5, 2)/7), # czy dzień weekendowy?
+  temp = rnorm(n_days, 25, 3), # temperatura
+  wind = rlnorm(n_days, 1.5, 1) # prędkość wiatru
 )
 
 # deszcz: większe prawdopodobieństwo, gdy temperatura jest niższa
 days$rain = sapply(days$temp, function(x) sample(c(0, 1), 1, prob = c(50+x, 50-x)/100)*rpois(1, 5))
 
-hist(days$wind)
-hist(days$temp)
-hist(days$rain)
-
-summary(days)
-
-set.seed(456)
+set.seed(222)
 n_shops = 20
 
 shops = data.frame(
   shop = 1:n_shops,
-  exp = rpois(n_shops, 5),
-  beach = rlnorm(n_shops, 2.5, 1.5)*10,
-  flavors = rpois(n_shops, 3)+4,
-  parking = sample(c(0, 1), n_shops, replace = T)
+  exp = rpois(n_shops, 5), # od ilu lat istnieje lodziarnia
+  beach = rlnorm(n_shops, 2.5, 1.5)*10, # odległość od plaży
+  flavors = rpois(n_shops, 3)+4, # liczba oferowanych smaków
+  parking = sample(c(0, 1), n_shops, replace = T) # czy posiada parking
 )
 
+# lodziarnie przy plaży nie mają parkingów
 shops$parking = ifelse(shops$beach < 200, 0, shops$parking)
 
-shops$price = ifelse(shops$beach < 200, 7, 6) + sample(c(-1, 0, 1), n_shops, replace = T)
-shops$other = sapply(shops$beach, function(x) rlnorm(1, log(x/50), 0.5)*10)
+shops$price = ifelse(shops$beach < 200, 7, 6) + sample(c(-1, 0, 1), n_shops, replace = T) # cena gałki lodów
+shops$other = sapply(shops$beach, function(x) rlnorm(1, log(x/50), 0.5)*10) # odległość od innej lodziarni
 
 data <- merge(days, shops, by = NULL)
 
+# sprzedaż: zależna od temperatury, deszczu, odległości od plaży i konkurencji, ceny, weekendu, renomy i liczby smaków
 data$sales <- 2000 + 10*data$temp - 40*data$rain - 0.1*data$beach + 0.05*data$other - 7*data$price +
   30*data$weekend + 5*data$temp*data$weekend +
   10*(data$exp-4)^2 + 5*(data$flavors-7)^2 + rnorm(400, 0, 50)
+
+data <- data[,-c(1, 6)] # usuwam niepotrzebne zmienne
+
+
+
 
 hist(data$beach)  
 hist(data$sales)  
@@ -62,9 +63,11 @@ hist(data$sales)
 pairs(sales ~ temp + rain + beach + other + price + weekend + exp + flavors, data)
 
 
+
 # regresja z wieloma zmiennymi
 
 model <- lm(sales ~ temp + rain + beach + other + price + weekend + exp + flavors + parking + wind, data)
+model <- lm(sales ~ ., data)
 summary(model)
 
 # Tu omówić interpretację zmiennych
@@ -76,12 +79,12 @@ cor(data)
 install.packages("corrplot")
 library(corrplot)
 
-corrplot(cor(data[,-1]))
+corrplot(cor(data))
 
 # koincydencja
 
 sign(model$coefficients)
-sign(cor(data[,-1]))[,10]
+sign(cor(data))[,11]
 
 # nie występuje dla "other" ze względu na wysoką korelację z "beach" - w modelu lepiej mieć tylko jedną z nich
 
@@ -94,13 +97,16 @@ summary(model)
 # poprawa - nieistotne są zmienne, które nie brały udziału w tworzeniu sales
 # odrzucam nieistotne zmienne
 
+model <- lm(sales ~ temp + rain + beach + weekend + flavors + parking, data)
+summary(model)
+
 model <- lm(sales ~ temp + rain + beach + weekend + flavors, data)
 summary(model)
 
 # zwiększone skorygowane R2 - więc model zyskuje na pomniejszeniu
 
 # pokazuję, że jeśli usunę ważną zmienną, oba wskaźniki spadają
-model <- lm(sales ~ rain + beach + weekend + exp + flavors + parking, data)
+model <- lm(sales ~ rain + beach + weekend + exp + flavors, data)
 summary(model)
 
 plot(model)
@@ -116,7 +122,6 @@ k <- c(1:10)[unlist(comb[100,])]
 
 m <- 10
 
-data <- data[,-c(1, 6)]
 
 cor_matrix <- cor(data)
 cor_matrix
@@ -153,14 +158,13 @@ colnames(data)[K_max]
 
 # Model z Hellwiga może mieć mniejsze R^2
 
-model <- lm(sales ~ weekend + beach + rain + exp + temp, data)
+model <- lm(sales ~ weekend + beach + rain + exp + temp + flavors, data)
 summary(model)
 
 vif(model)
 
+plot(model)
 
-model <- lm(sales ~ temp + rain + beach + weekend + exp + flavors + parking, data)
-summary(model)
-vif(model)
+data[c(119, 254, 285),]
 
-
+summary(data)
