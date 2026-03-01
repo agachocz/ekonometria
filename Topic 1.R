@@ -31,6 +31,7 @@ data <- data %>% mutate(oranges = get_preference(family_size+1))
 plot(x = data$family_size, y = data$oranges)
 abline(a = 1, b = 1, col = "red")
 
+cor(data$family_size, data$oranges)
 # suma kwadratów reszt
 # y = ax + b + e
 # sum(e^2) = sum((y - ax - b)^2)
